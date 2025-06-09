@@ -118,23 +118,35 @@ function typeLogo() {
 
 
 // Enable command input
-function enableInput() {
-  document.addEventListener("keydown", (e) => {
-    if (typing) return;
+let inputEnabled = false;
 
-    if (e.key.length === 1) {
-      userInput.textContent += e.key;
-    } else if (e.key === "Backspace") {
-      userInput.textContent = userInput.textContent.slice(0, -1);
-    } else if (e.key === "Enter") {
-      const command = userInput.textContent.trim();
-      terminal.innerHTML += `\n> ${command}\n`;
-scrollToBottom();
-      userInput.textContent = "";
-      handleCommand(command.toLowerCase());
-    }
-  });
+function handleKeydown(e) {
+  if (typing) return;
+
+  if (e.key.length === 1) {
+    userInput.textContent += e.key;
+  } else if (e.key === "Backspace") {
+    userInput.textContent = userInput.textContent.slice(0, -1);
+  } else if (e.key === "Enter") {
+    const command = userInput.textContent.trim();
+    terminal.innerHTML += `\n> ${command}\n`;
+    scrollToBottom();
+    userInput.textContent = "";
+    handleCommand(command.toLowerCase());
+  }
 }
+
+function enableInput() {
+  if (inputEnabled) return; // 🛡 Prevent multiple listeners
+  inputEnabled = true;
+  document.addEventListener("keydown", handleKeydown);
+}
+
+function disableInput() {
+  document.removeEventListener("keydown", handleKeydown);
+  inputEnabled = false;
+}
+
 
 function typeText(text, callback) {
   let i = 0;
