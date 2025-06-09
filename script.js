@@ -15,7 +15,7 @@ const bootErrors = [
 "> [WARNING] Forbidden Archive Node detected. Invocation bypass engaged.",
 "> [INFO] Cipher-chant successful. Ritual subaccess attained.",
 "> [ALERT] Memory-ghosts interfering with process queue. PURGING",
-"> [ERROR] Machine Spirit is displeased. Bribing with cookies.",
+"> [ERROR] Machine Spirit is displeased. Bribing with toaster circuit diagrams.",
 "> [WARNING] Null entropy surge detected. Running scrap-code prayers..."
 ];
 
@@ -83,13 +83,13 @@ function typeLine() {
     if (charIndex < line.length) {
       terminal.innerHTML += line.charAt(charIndex++);
 scrollToBottom();
-      setTimeout(typeLine, 25);
+      setTimeout(typeLine, 1);
     } else {
       terminal.innerHTML += "\n";
 scrollToBottom();
       charIndex = 0;
       lineIndex++;
-      setTimeout(typeLine, 200);
+      setTimeout(typeLine, 20);
     }
   } else {
   typeLogo(); // start typing the logo after boot sequence ends
@@ -165,7 +165,7 @@ scrollToBottom();
       break;
 
     case "open dossier":
-      await loadContent("dossier");
+      await loadContent("dossier",false);
       break;
 
     case "open report":
@@ -192,16 +192,28 @@ scrollToBottom();
 }
 
 // Fetch HTML content
-async function loadContent(name) {
+async function loadContent(name, type = true) {
   try {
     const response = await fetch(`content/${name}.html`);
     const text = await response.text();
-    const header = `\nLOADING ${name.toUpperCase()}...\n\n`;
 
-    typeText(header + text + "\n");
+    if (type) {
+      const header = `\nLOADING ${name.toUpperCase()}...\n\n`;
+      typeText(header + stripHTML(text) + "\n"); // Strip tags to prevent raw HTML output
+    } else {
+      terminal.innerHTML = ""; // Clear existing content
+      terminal.innerHTML = text; // Inject real HTML
+      scrollToBottom();
+    }
   } catch (e) {
     typeText(`\nERROR: ${name}.html NOT FOUND\n`);
   }
+}
+
+function stripHTML(html) {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.innerText;
 }
 
 // Reboot logic
