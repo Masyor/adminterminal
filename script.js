@@ -7,17 +7,22 @@ let charIndex = 0;
 let typing = true;
 
 const bootErrors = [
-"> [ERROR] Daemoncog Protocol 6B rejected offering. Retrying...",
+"> [ERROR] Daemoncog Protocol 6B rejected bribe. Retrying...",
 "> [WARNING] Intrusion Spirit Ligma-4 is losing cohesion.",
 "> [ERROR] Auto-sanctioned counter-rite initiated. Deflecting...",
-"> [LOG] Servo-skull override successful. Administrative sublayer exposed.",
+"> [LOG] Cogitator override successful. Administrative sublayer exposed.",
 "> [ERROR] Lexmechanic checksum mismatch: Holy Algorithm unsatisfied.",
 "> [WARNING] Forbidden Archive Node detected. Invocation bypass engaged.",
 "> [INFO] Cipher-chant successful. Ritual subaccess attained.",
 "> [ALERT] Memory-ghosts interfering with process queue. PURGING",
-"> [ERROR] Machine Spirit is displeased. Bribing with toaster circuit diagrams.",
+"> [ERROR] Machine Spirit is displeased. Bribing with toaster picts.",
 "> [WARNING] Null entropy surge detected. Running scrap-code prayers..."
 ];
+
+const simpleLogo = `
+> LOADING INTERFACE . . .
+> ADEPTUS ADMINISTRATUM OPERATIONAL COGITATOR CLUSTER 7-ALPHA ONLINE.
+`;
 
 
 const asciiLogo = `
@@ -97,30 +102,64 @@ scrollToBottom();
 }
 
 function typeLogo() {
-  const lines = asciiLogo.trim().split("\n");
-  let lineIdx = 0;
+  const isMobile = window.innerWidth < 1000;
 
-  function typeNextLine() {
-    if (lineIdx < lines.length) {
-      terminal.innerHTML += lines[lineIdx++] + "\n";
-      scrollToBottom();
-      setTimeout(typeNextLine, 100); // 100ms per line
-    } else {
+  if (isMobile) {
+    typeText(simpleLogo, () => {
       terminal.innerHTML += "\nType 'help' for available commands.\n";
       scrollToBottom();
       typing = false;
       enableInput();
+    });
+  } else {
+    const lines = asciiLogo.trim().split("\n");
+    typeLines(lines, {
+      delay: 100,
+      callback: () => {
+        terminal.innerHTML += "\nType 'help' for available commands.\n";
+        scrollToBottom();
+        typing = false;
+        enableInput();
+      }
+    });
+  }
+}
+
+
+
+function typeLines(lines, options = {}) {
+  const {
+    delay = 100,
+    callback = null,
+    isHTML = false
+  } = options;
+
+  let index = 0;
+
+  function typeNext() {
+    if (index < lines.length) {
+      if (isHTML && lines[index] instanceof HTMLElement) {
+        terminal.appendChild(lines[index]);
+      } else {
+        terminal.innerHTML += lines[index];
+      }
+      terminal.innerHTML += "\n";
+      scrollToBottom();
+      index++;
+      setTimeout(typeNext, delay);
+    } else if (callback) {
+      callback();
     }
   }
 
-  typeNextLine();
+  typeNext();
 }
 
 
 // Enable command input
 let inputEnabled = false;
 
-function handleKeydown(e) {
+async function handleKeydown(e) {
   if (typing) return;
 
   if (e.key.length === 1) {
@@ -165,23 +204,37 @@ function typeText(text, callback) {
 
 // Command handler
 async function handleCommand(cmd) {
+  const tokens = cmd.trim().split(/\s+/);
+
+  if (tokens[0] === "open" && tokens.length === 3) {
+    const folder = tokens[1].toLowerCase();
+    const filename = tokens[2];
+    const validFolders = ["dossier", "report", "info"];
+
+    if (!validFolders.includes(folder)) {
+      terminal.innerHTML += `\nERROR: Unknown type '${folder}'. Valid types are: dossier, report, info.\n`;
+      scrollToBottom();
+      return;
+    }
+
+    await loadContent(`${folder}/${filename}`, true, folder); // pass folder for error message
+    return;
+  }
+
+  // Fallback for old/simple commands
   switch (cmd) {
     case "help":
-      terminal.innerHTML += "\nAvailable Commands:\n- open [filename]\n- list files\n- main\n- reboot\n";
-scrollToBottom();
+      terminal.innerHTML += "\nAvailable Commands:\n- open [folder] [filename]\n- list files\n- main\n- reboot\n";
+      scrollToBottom();
       break;
 
     case "list files":
-      terminal.innerHTML += "\nAvailable Files:\n- dossier\n- report\n- main\n- archive\n";
-scrollToBottom();
+      terminal.innerHTML += "\nAvailable Files:\n- dossier\n- report\n- info\n- main\n- archive\n";
+      scrollToBottom();
       break;
 
-    case "open dossier":
-      await loadContent("dossier",false);
-      break;
-
-    case "open report":
-      await loadContent("report");
+    case "open archive":
+      openLink("https://archive.imperium.gov/data/872-M41");
       break;
 
     case "main":
@@ -192,34 +245,58 @@ scrollToBottom();
       rebootTerminal();
       break;
 
-    case "open archive":
-      openLink("https://archive.imperium.gov/data/872-M41");
-      break;
-
-
     default:
       terminal.innerHTML += `Unknown command: ${cmd}\n`;
-scrollToBottom();
+      scrollToBottom();
   }
 }
 
 // Fetch HTML content
-async function loadContent(name, type = true) {
+async function loadContent(name, type = true, folderName = null) {
   try {
     const response = await fetch(`content/${name}.html`);
-    const text = await response.text();
+    const html = await response.text();
+    const header = `\nLOADING ${name.toUpperCase()}...\n\n`;
 
-    if (type) {
-      const header = `\nLOADING ${name.toUpperCase()}...\n\n`;
-      typeText(header + stripHTML(text) + "\n"); // Strip tags to prevent raw HTML output
-    } else {
-      terminal.innerHTML = ""; // Clear existing content
-      terminal.innerHTML = text; // Inject real HTML
-      scrollToBottom();
-    }
+    setTimeout(() => {
+      typeText(header, () => {
+        if (type) {
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = html;
+          const lines = extractDisplayLines(tempDiv);
+          typeLines(lines, { isHTML: true, delay: 100, callback: enableInput });
+        } else {
+          const lines = stripHTML(html).split("\n");
+          typeLines(lines, { delay: 100, callback: enableInput });
+        }
+      });
+    }, 1000);
   } catch (e) {
-    typeText(`\nERROR: ${name}.html NOT FOUND\n`);
+    typeText(
+  `\nERROR: ${name.split("/").pop()}.html NOT FOUND in ${folderName || 'content'}\n` +
+  (folderName ? `SUGGESTION: Type 'list ${folderName}s' to view available entries.\n` : ""),
+  enableInput
+);
   }
+}
+
+function extractDisplayLines(container) {
+  const lines = [];
+
+  container.childNodes.forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const textLines = node.textContent.split("\n");
+      textLines.forEach(line => {
+        const span = document.createElement("span");
+        span.textContent = line;
+        lines.push(span);
+      });
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      lines.push(node);
+    }
+  });
+
+  return lines;
 }
 
 function stripHTML(html) {

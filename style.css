@@ -1,6 +1,6 @@
 body {
   background-color: black;
-  color: #51cc75;
+  color: #00ccff;
   font-family: 'Courier New', Courier, monospace;
   white-space: pre;
   font-size: 16px;
@@ -43,7 +43,7 @@ html, body {
 }
 
 .prompt {
-  color: #55ff55;
+  color: #00ccff;
 }
 
 .terminal-image-wrapper {
@@ -116,13 +116,13 @@ body::before {
 
 /* Scrollbar thumb (the draggable part) */
 ::-webkit-scrollbar-thumb {
-  background-color: #51cc75;
+  background-color: #00ccff;
   border-radius: 4px;
 }
 
 /* On hover, make the thumb slightly brighter */
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #76ff9e;
+  background-color: ##00ccff;
 }
 
 /* Optional: corner of scrollbar (if both axes visible) */
@@ -132,6 +132,6 @@ body::before {
 
 /* Firefox scrollbar support */
 .terminal {
-  scrollbar-color: #51cc75 black;
+  scrollbar-color: #00ccff black;
   scrollbar-width: thin;
 }
